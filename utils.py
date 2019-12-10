@@ -19,6 +19,11 @@ DUMP_DIR = os.path.join(PROJECT_DIR, 'dumps')
 LOG_DIR = os.path.join(PROJECT_DIR, 'logs')
 CELL_TYPES = ['HEPG2', 'HUVEC', 'RPE', 'U2OS']
 PLATES = ['Plate1', 'Plate2', 'Plate3', 'Plate4']
+
+TRAIN_EXPERIMENTS = ['HEPG2-01', 'HEPG2-03', 'HEPG2-05', 'HEPG2-06']
+VAL_EXPERIMENTS = ['HEPG2-07']
+TEST_EXPERIMENTS = ['HEPG2-02', 'HEPG2-04']
+
 LETTER_TO_IX = {}
 for ix, letter in enumerate(string.ascii_uppercase[1:15]):
     LETTER_TO_IX[letter] = ix 
@@ -72,3 +77,16 @@ def tf_fix(tf):
                 tf.config.experimental.set_memory_growth(gpu, True)
         except RuntimeError as e:
             print(e)
+            
+def load_controls(splits, collapse=False):
+    images = {}
+    for split in splits:
+        images[split] = np.load(os.path.join(RECURSION_DIR, 'npy', 'controls', split, f'controls-{split}-f32.npy'))
+    images = np.concatenate(list(images.values()))
+    labels = np.zeros((images.shape[0:4]), dtype=np.float32)
+    for i in range(len(labels)):
+        labels[i] = i
+    if collapse:
+        labels = labels.reshape((np.product(images.shape[0:4])))
+        images = images.reshape((np.product(images.shape[0:4]), *images.shape[4:]))
+    return images, labels
